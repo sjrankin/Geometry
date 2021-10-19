@@ -13,6 +13,7 @@
 		178CD7D7271B7965003FA658 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 178CD7D5271B7965003FA658 /* Main.storyboard */; };
 		178CD7D9271B796A003FA658 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 178CD7D8271B796A003FA658 /* Assets.xcassets */; };
 		178CD7DC271B796A003FA658 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 178CD7DA271B796A003FA658 /* LaunchScreen.storyboard */; };
+		178CD7E4271B7DB7003FA658 /* SurfaceWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 178CD7E3271B7DB7003FA658 /* SurfaceWindow.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +25,7 @@
 		178CD7D8271B796A003FA658 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		178CD7DB271B796A003FA658 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		178CD7DD271B796A003FA658 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		178CD7E3271B7DB7003FA658 /* SurfaceWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurfaceWindow.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,6 +61,7 @@
 				178CD7CF271B7965003FA658 /* AppDelegate.swift */,
 				178CD7D1271B7965003FA658 /* SceneDelegate.swift */,
 				178CD7D3271B7965003FA658 /* ViewController.swift */,
+				178CD7E3271B7DB7003FA658 /* SurfaceWindow.swift */,
 				178CD7D5271B7965003FA658 /* Main.storyboard */,
 				178CD7D8271B796A003FA658 /* Assets.xcassets */,
 				178CD7DA271B796A003FA658 /* LaunchScreen.storyboard */,
@@ -141,6 +144,7 @@
 				178CD7D4271B7965003FA658 /* ViewController.swift in Sources */,
 				178CD7D0271B7965003FA658 /* AppDelegate.swift in Sources */,
 				178CD7D2271B7965003FA658 /* SceneDelegate.swift in Sources */,
+				178CD7E4271B7DB7003FA658 /* SurfaceWindow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
