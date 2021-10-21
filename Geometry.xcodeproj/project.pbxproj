@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		170F07A52720A346008F3A82 /* LoopSurfaceWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 170F07A42720A346008F3A82 /* LoopSurfaceWindow.swift */; };
 		178CD7D0271B7965003FA658 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 178CD7CF271B7965003FA658 /* AppDelegate.swift */; };
 		178CD7D2271B7965003FA658 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 178CD7D1271B7965003FA658 /* SceneDelegate.swift */; };
 		178CD7D4271B7965003FA658 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 178CD7D3271B7965003FA658 /* ViewController.swift */; };
@@ -17,6 +18,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		170F07A42720A346008F3A82 /* LoopSurfaceWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopSurfaceWindow.swift; sourceTree = "<group>"; };
 		178CD7CC271B7965003FA658 /* Geometry.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Geometry.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		178CD7CF271B7965003FA658 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		178CD7D1271B7965003FA658 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -62,6 +64,7 @@
 				178CD7D1271B7965003FA658 /* SceneDelegate.swift */,
 				178CD7D3271B7965003FA658 /* ViewController.swift */,
 				178CD7E3271B7DB7003FA658 /* SurfaceWindow.swift */,
+				170F07A42720A346008F3A82 /* LoopSurfaceWindow.swift */,
 				178CD7D5271B7965003FA658 /* Main.storyboard */,
 				178CD7D8271B796A003FA658 /* Assets.xcassets */,
 				178CD7DA271B796A003FA658 /* LaunchScreen.storyboard */,
@@ -142,6 +145,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				178CD7D4271B7965003FA658 /* ViewController.swift in Sources */,
+				170F07A52720A346008F3A82 /* LoopSurfaceWindow.swift in Sources */,
 				178CD7D0271B7965003FA658 /* AppDelegate.swift in Sources */,
 				178CD7D2271B7965003FA658 /* SceneDelegate.swift in Sources */,
 				178CD7E4271B7DB7003FA658 /* SurfaceWindow.swift in Sources */,
