@@ -14,23 +14,30 @@ class SurfaceWindow: UIView
     var CX: CGFloat = 0.0
     var CY: CGFloat = 0.0
     
+    var Center: CGPoint
+    {
+        get
+        {
+            return self.center
+        }
+    }
+    
     var RotateFrame: Bool = false
     {
         didSet
         {
             if RotateFrame
             {
-                self.layer.backgroundColor = UIColor.white.cgColor
+                self.backgroundColor = UIColor.white
             }
             else
             {
-                self.layer.backgroundColor = UIColor.systemYellow.cgColor
+                self.backgroundColor = UIColor.systemYellow
             }
         }
     }
     
     var OriginalPoints = [CGPoint]()
-    var InLoopMode: Bool = false
     var ShowDistances: Bool = false
     var Decorate: Bool = false
     var Closest: CGPoint? = nil
@@ -39,14 +46,11 @@ class SurfaceWindow: UIView
     var TestPoint: CGPoint? = nil
     var PointType: PointTypes = .None
     var Callback: Messages? = nil
-    var LoopCallback: LoopData? = nil
     
-    typealias LoopData = (CGPoint, Int, Int, Int, (Int, Int), CGFloat, CGFloat) -> ()
     typealias Messages = (String) -> ()
-    func Initialize(_ Callback: Messages? = nil, _ LoopDataCallback: LoopData? = nil)
+    func Initialize(_ Callback: Messages? = nil)
     {
         self.Callback = Callback
-        self.LoopCallback = LoopDataCallback
         let Tap = UITapGestureRecognizer(target: self,
                                          action: #selector(HandleTaps))
         Tap.numberOfTapsRequired = 1
@@ -60,11 +64,6 @@ class SurfaceWindow: UIView
     {
         if RotateFrame
         {
-            return
-        }
-        if InLoopMode
-        {
-            HandleLoopModePans(With: Recognizer)
             return
         }
         let RawLocation = Recognizer.location(in: self)
@@ -90,23 +89,26 @@ class SurfaceWindow: UIView
         PlotSurface()
     }
     
-    func HandleLoopModePans(With: UIPanGestureRecognizer)
+    func ClosestTo2(Point: CGPoint) -> Int
     {
-        switch With.state
+        if OriginalPoints.isEmpty
         {
-            case .began, .changed:
-                let RawLocation = With.location(in: self)
-                let Location = CGPoint(x: RawLocation.x - CX,
-                                       y: CY - RawLocation.y)
-                if let ClosePoint = ClosestTo(Point: Location)
-                {
-                    OriginalPoints[ClosePoint.PointIndex] = Location
-                    PlotSurface()
-                }
-                
-            default:
-                break
+            return -1
         }
+        var Index = 0
+        var ClosestIndex: Int = -1
+        var PDistance: CGFloat = CGFloat.greatestFiniteMagnitude
+        for SomePoint in OriginalPoints
+        {
+            let SDistance = Distance(From: Point, To: SomePoint)
+            if SDistance < PDistance
+            {
+                PDistance = SDistance
+                ClosestIndex = Index
+            }
+            Index = Index + 1
+        }
+        return ClosestIndex
     }
     
     func ClosestTo(Point: CGPoint) -> (PointIndex: Int, PointDistance: CGFloat)?
@@ -117,7 +119,7 @@ class SurfaceWindow: UIView
         }
         var Index = 0
         var ClosestIndex: Int = -1
-        var PDistance: CGFloat = 10000000.0
+        var PDistance: CGFloat = CGFloat.greatestFiniteMagnitude
         for SomePoint in OriginalPoints
         {
             let SDistance = Distance(From: Point, To: SomePoint)
@@ -135,11 +137,6 @@ class SurfaceWindow: UIView
     {
         if RotateFrame
         {
-            return
-        }
-        if InLoopMode
-        {
-            HandleLoopModeTaps(With: Recognizer)
             return
         }
         if PointType == .None
@@ -169,54 +166,11 @@ class SurfaceWindow: UIView
         PlotSurface()
     }
     
-    var MLocation: CGPoint? = nil
-    var MClosest: Int? = nil
-    var MAngle: CGFloat? = nil
-    
-    func HandleLoopModeTaps(With: UITapGestureRecognizer)
-    {
-        let RawLocation = With.location(in: self)
-        let Location = CGPoint(x: RawLocation.x - CX,
-                               y: CY - RawLocation.y)
-        guard let (CloseIndex, CloseDistance) = ClosestTo(Point: Location) else
-        {
-            return
-        }
-         MLocation = CGPoint(x: Location.x + CX,
-                y: CY - Location.y)
-        var NewAngle = Angle3(Point2: Location, Point3: OriginalPoints[CloseIndex])
-        NewAngle = NewAngle * 180.0 / CGFloat.pi
-        MAngle = NewAngle
-        let CloseAngle = PointAngles[CloseIndex] * 180.0 / CGFloat.pi
-        print("NewAngle=\(Int(NewAngle))°, CloseAngle{\(CloseIndex)}=\(Int(CloseAngle))°")
-        PlotSurface()
-        /*
-        var MinusOne = CloseIndex - 1
-        if MinusOne < 0
-        {
-            MinusOne = OriginalPoints.count - 1
-        }
-        var PlusOne = CloseIndex + 1
-        if PlusOne > OriginalPoints.count - 1
-        {
-            PlusOne = 0
-        }
-        let InsertionIndex = ReturnSegment(Closest: CloseIndex, MinusOne: MinusOne,
-                                           PlusOne: PlusOne, New: Location)
-        LoopCallback?(Location, CloseIndex, MinusOne, PlusOne,
-                      (CloseIndex, InsertionIndex),
-                      Distance(From: Location, To: OriginalPoints[MinusOne]),
-                      Distance(From: Location, To: OriginalPoints[PlusOne]))
-        PlotSurface()
-        OriginalPoints.insert(Location, at: InsertionIndex)
-         */
-    }
-    
     func GetClosePointAngle(Closest: Int) -> CGFloat
     {
         let ClosestPoint = OriginalPoints[Closest]
         var ClosestAngle = AngleFrom(Origin: .zero,
-                                 To: ClosestPoint)
+                                     To: ClosestPoint)
         ClosestAngle = 360.0 - ClosestAngle
         ClosestAngle = ClosestAngle + 90.0
         if ClosestAngle > 360.0
@@ -225,128 +179,6 @@ class SurfaceWindow: UIView
         }
         let NormalizingAngle = 90.0 - ClosestAngle
         return NormalizingAngle
-    }
-    
-    func ReturnSegment(Closest: Int, MinusOne: Int, PlusOne: Int, New: CGPoint) -> Int
-    {
-        var ClosestPoint = OriginalPoints[Closest]
-        let RotationalAngle = GetClosePointAngle(Closest: Closest)
-        var MinusOnePoint = OriginalPoints[MinusOne]
-        var PlusOnePoint = OriginalPoints[PlusOne]
-        var NewPoint = New
-        print("Unrotated ClosestPoint=\(ClosestPoint)")
-        print("          MinusOnePoint=\(MinusOnePoint)")
-        print("          PlusOnePoint=\(PlusOnePoint)")
-        print("          NewPoint=\(NewPoint)")
-        
-        print(">>> RotationAngle = \(RotationalAngle)")
-        ClosestPoint = ClosestPoint.Rotate(By: RotationalAngle)
-        MinusOnePoint = MinusOnePoint.Rotate(By: RotationalAngle)
-        PlusOnePoint = PlusOnePoint.Rotate(By: RotationalAngle)
-        NewPoint = NewPoint.Rotate(By: RotationalAngle)
-        
-        print("Rotated ClosestPoint=\(ClosestPoint)")
-        print("        MinusOnePoint=\(MinusOnePoint)")
-        print("        PlusOnePoint=\(PlusOnePoint)")
-        print("        NewPoint=\(NewPoint)")
-        
-        let RotatedNewDistance = Distance(From: ClosestPoint, To: NewPoint)
-        let RotatedM1Distance = Distance(From: ClosestPoint, To: MinusOnePoint)
-        let RotatedP1Distance = Distance(From: ClosestPoint, To: PlusOnePoint)
-        print("Distance New=\(RotatedNewDistance)")
-        print("         MinusOne=\(RotatedM1Distance)")
-        print("         PlusOne=\(RotatedP1Distance)")
-        print("         MinusOne to New=\(Distance(From: NewPoint, To: MinusOnePoint))")
-        print("         PlusOne to New=\(Distance(From: NewPoint, To: PlusOnePoint))")
-        
-        if Distance(From: NewPoint, To: MinusOnePoint) < Distance(From: NewPoint, To: PlusOnePoint)
-        {
-            print("Returning Minus \(MinusOne)")
-            return MinusOne
-        }
-        else
-        {
-            print("Returning Plus \(PlusOne)")
-            return PlusOne
-        }
-        
-        if RotatedM1Distance < RotatedP1Distance
-        {
-            if RotatedNewDistance < RotatedM1Distance
-            {
-                print("-Closest to Minus One")
-                return MinusOne
-            }
-            else
-            {
-                print("-Closest to Plus One")
-                return PlusOne
-            }
-        }
-        else
-        {
-            if RotatedNewDistance < RotatedP1Distance
-            {
-                print("+Closest to Plus One")
-                return PlusOne
-            }
-            else
-            {
-                print("+Closest to Minus One")
-                return MinusOne
-            }
-        }
-        
-        #if false
-        let MinusIsHigh = MinusOnePoint.y < PlusOnePoint.y
-        //Be very careful to make sure which way lower Y values are!
-        if NewPoint.y < ClosestPoint.y
-        {
-            if MinusIsHigh
-            {
-                Callback?("MinusIsHigh, NewPoint < ClosestPoint")
-                return PlusOne//MinusOne
-            }
-            else
-            {
-                Callback?("MinusIsLow, NewPoint < ClosestPoint")
-               return MinusOne//PlusOne
-            }
-        }
-        else
-        {
-            if MinusIsHigh
-            {
-                Callback?("MinusIsHigh, NewPoint >= ClosestPoint")
-                return MinusOne//PlusOne
-            }
-            else
-            {
-                Callback?("MinusIsLow, NewPoint >= ClosestPoint")
-                return PlusOne//MinusOne
-            }
-        }
-        #else
-        //The first conditional determines if the new point is over or under the
-        //closest point. The second condition determines which adjacent point is
-        //lower. Be careful of coordinate space to make sure you take into account
-        //which direction has lower Y values. In this case, lower Y values are
-        //spatially "down" in the display.
-        switch (NewPoint.y < ClosestPoint.y, MinusOnePoint.y < PlusOnePoint.y)
-        {
-            case (true, true):
-                return PlusOne
-                
-            case (true, false):
-                return MinusOne
-                
-            case (false, true):
-                return MinusOne
-                
-            case (false, false):
-                return PlusOne
-        }
-        #endif
     }
     
     func SetPointType(To: PointTypes)
@@ -361,8 +193,10 @@ class SurfaceWindow: UIView
     
     override func draw(_ rect: CGRect)
     {
+        self.backgroundColor = UIColor.systemYellow
         let Width = rect.size.width
         let Height = rect.size.height
+        
         var Pattern: [CGFloat] = [4.0, 2.0]
         if GridGap > 0
         {
@@ -400,12 +234,6 @@ class SurfaceWindow: UIView
         CMLine.addLine(to: CGPoint(x: Width, y: CY))
         CMLine.setLineDash(&Pattern, count: Pattern.count, phase: 0)
         CMLine.stroke()
-
-        if InLoopMode
-        {
-            DrawInLoopMode()
-            return
-        }
         
         var AdjustedMinusOne = CGPoint()
         var AdjustedPlusOne = CGPoint()
@@ -626,16 +454,16 @@ class SurfaceWindow: UIView
                 TestLabel.draw(in: TestRect, withAttributes: Attributes)
                 
                 let TestToMinusRect = CGRect(x: MidTM.x + 12.0,
-                                      y: MidTM.y - 12.0,
-                                      width: 100,
-                                      height: 20)
+                                             y: MidTM.y - 12.0,
+                                             width: 100,
+                                             height: 20)
                 let TMLabel = "\(Int(TMinusDistance))"
                 TMLabel.draw(in: TestToMinusRect, withAttributes: Attributes)
                 
                 let TestToPlusRect = CGRect(x: MidPM.x + 12.0,
-                                             y: MidPM.y - 12.0,
-                                             width: 100,
-                                             height: 20)
+                                            y: MidPM.y - 12.0,
+                                            width: 100,
+                                            height: 20)
                 let PMLabel = "\(Int(TPlusDistance))"
                 PMLabel.draw(in: TestToPlusRect, withAttributes: Attributes)
             }
@@ -720,14 +548,14 @@ class SurfaceWindow: UIView
         P.lineWidth = 5.0
         Color.setStroke()
         P.stroke()
-        let NiceX = "\(Int(Point.x))"
-        let NiceY = "\(Int(Point.y))"
+        let NiceX = "\(Int(Point.x - CX))"
+        let NiceY = "\(Int(CY - Point.y))"
         var Trailing = ""
         if let FinalTag = TrailingTag
         {
             Trailing = " \(FinalTag)"
         }
-            let PrettyLabel = "\(Tag)(\(NiceX),\(NiceY)\(Trailing)" as NSString
+        let PrettyLabel = "\(Tag)(\(NiceX),\(NiceY))\(Trailing)" as NSString
         let TextRect = CGRect(x: Point.x + 12.0,
                               y: Point.y - 12.0,
                               width: 200,
@@ -778,95 +606,15 @@ class SurfaceWindow: UIView
         return Final
     }
     
-    func DrawInLoopMode()
+    func RadialPoint(Center: CGPoint, Angle: CGFloat, Radius: CGFloat) -> CGPoint
     {
-        PointAngles.removeAll()
-        if OriginalPoints.count > 2
-        {
-            for Index in 0 ..< OriginalPoints.count
-            {
-                var Previous = Index - 1
-                var Next = Index + 1
-                if Index == 0
-                {
-                    Previous = OriginalPoints.count - 1
-                }
-                if Next > OriginalPoints.count - 1
-                {
-                    Next = 0
-                }
-                let Angle = Angle3(Point2: OriginalPoints[Previous],
-                                   Point3: OriginalPoints[Next])
-                PointAngles.append(Angle)
-                let Degrees = Angle * 180.0 / CGFloat.pi
-                //print("[\(Previous)]=\(OriginalPoints[Previous])")
-                //print("[\(Index)]=\(OriginalPoints[Index]) Angle at index \(Index) = Int(\(Degrees))°")
-                //print("[\(Next)]=\(OriginalPoints[Next])\n")
-                let LinePath = UIBezierPath()
-                let VP = CGPoint(x: OriginalPoints[Index].x + CX,
-                                 y: CY - OriginalPoints[Index].y)
-                LinePath.move(to: VP)
-                let P1 = RadialPoint(Center: VP,
-                                     Angle: Degrees,
-                                     Radius: 100.0)
-                LinePath.addLine(to: P1)
-                LinePath.move(to: VP)
-                let OppositeAngle = fmod(abs(180.0 + Degrees), 360.0)
-                let P2 = RadialPoint(Center: VP,
-                                     Angle: OppositeAngle,
-                                     Radius: 100.0)
-                LinePath.addLine(to: P2)
-                LinePath.lineWidth = 2
-                UIColor.yellow.setStroke()
-                LinePath.stroke()
-            }
-        }
-        
-        if let NewSpot = MLocation
-        {
-            var Trailing = ""
-            if MAngle != nil
-            {
-                Trailing = "\(Int(MAngle!))°"
-            }
-            MakePoint2(NewSpot, Color: UIColor.systemPurple, Tag: "▲ ",
-            TrailingTag: Trailing)
-            if let ClosestSpot = MClosest
-            {
-                DrawLine(From: NewSpot,
-                         To: OriginalPoints[ClosestSpot],
-                         Width: 4.0,
-                         Color: UIColor.white,
-                         AdjustPoints: false)
-            }
-        }
-        for Index in 0 ..< OriginalPoints.count
-        {
-            let LastIndex = Index == OriginalPoints.count - 1 ? 0 : Index + 1
-            DrawLine(From: OriginalPoints[Index],
-                     To: OriginalPoints[LastIndex],
-                     Width: 2.5,
-                     Color: UIColor.systemIndigo,
-            AdjustPoints: true)
-        }
-        var Index = 0
-        for Point in OriginalPoints
-        {
-            var Unused = CGPoint()
-            var Degree = PointAngles[Index] * 180.0 / CGFloat.pi
-            MakePoint(Point,
-                      Normalizer: 0.0,
-                      Color: UIColor.systemIndigo,
-                      Adjusted: &Unused,
-                      Tag: "\(Index) ",
-            TrailingTag: " \(Int(Degree))°")
-            Index = Index + 1
-        }
-        
-       
+        let Radians = Angle * CGFloat.pi / 180.0
+        let X = Radius * cos(Radians)
+        let Y = Radius * sin(Radians)
+        return CGPoint(x: X + Center.x, y: Y + Center.y)
     }
     
-    func RadialPoint(Center: CGPoint, Angle: CGFloat, Radius: CGFloat) -> CGPoint
+    func RadialPointA(Center: CGPoint, Angle: CGFloat, Radius: CGFloat) -> CGPoint
     {
         let Radians = Angle * CGFloat.pi / 180.0
         let X = Radius * cos(Radians)
