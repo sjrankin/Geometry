@@ -30,7 +30,6 @@ class LoopSurfaceWindow: UIView
     }
     
     var OriginalPoints = [CGPoint]()
-    var PointAngles = [CGFloat]()
     
     typealias Messages = (String) -> ()
     typealias LoopData = (CGPoint, Int, Int, Int, (Int, Int), CGFloat, CGFloat) -> ()
@@ -97,7 +96,6 @@ class LoopSurfaceWindow: UIView
         }
         MClosest = CloseIndex
         MLocation = Location
-        #if true
         let (Previous, Next) = GetAdjacentPoints(To: CloseIndex)
         Rect1 = CGRect.MakeRect(Point1: OriginalPoints[CloseIndex],
                                 Point2: OriginalPoints[Previous])
@@ -134,74 +132,10 @@ class LoopSurfaceWindow: UIView
             }
         }
         OriginalPoints.insert(Location, at: InsertionIndex + 1)
-        #else
-        MClosest = CloseIndex
-        MLocation = Location
-        //var NewAngle = Angle3A(Point2: Location, Point3: OriginalPoints[CloseIndex])
-        //NewAngle = NewAngle * 180.0 / CGFloat.pi
-        //MAngle = NewAngle
-        //let CloseAngle = PointAngles[CloseIndex]
-        //print("NewAngle=\(Int(NewAngle))°, CloseAngle{\(CloseIndex)}=\(Int(CloseAngle * 180.0 / CGFloat.pi))°")
-        
-        var InsertionPoint = GetInsertionPoint(NewSpot: Location)
-        InsertionPoint = InsertionPoint + 1
-        if InsertionPoint > OriginalPoints.count - 1
-        {
-            InsertionPoint = 0
-        }
-        NewestIndex = InsertionPoint
-        print(">>> NewPoint=\(Location)")
-        print(">>> InsertionPoint=\(InsertionPoint)")
-        //print("Before: \(OriginalPoints)")
-        OriginalPoints.insert(Location, at: InsertionPoint)
-        //print("After:  \(OriginalPoints)")
-        
-        let ClosestOther = ClosestOtherPoint(TestIndex: InsertionPoint)
-        HighlightIndex = ClosestOther
-        #endif
         PlotSurface()
     }
     
     var NewestIndex = -1
-    
-    func GetInsertionPoint(NewSpot: CGPoint) -> Int
-    {
-        if let ClosestSpot = MClosest
-        {
-            #if true
-            let (Previous, Next) = GetAdjacentPoints(To: ClosestSpot)
-            #else
-            let Actual = OriginalPoints[ClosestSpot]
-            DrawLine(From: NewSpot,
-                     To: Actual,
-                     Width: 4.0,
-                     Color: UIColor.red.withAlphaComponent(0.5))
-            let (Previous, Next) = GetAdjacentPoints(To: ClosestSpot)
-            DrawLine(From: NewSpot,
-                     To: OriginalPoints[Previous],
-                     Width: 4.0,
-                     Color: UIColor.systemOrange.withAlphaComponent(0.75))
-            DrawLine(From: NewSpot,
-                     To: OriginalPoints[Next],
-                     Width: 4.0,
-                     Color: UIColor.systemOrange.withAlphaComponent(0.75))
-            PlotSurface()
-            #endif
-            let DistToPrevious = Distance(From: NewSpot, To: OriginalPoints[Previous])
-            let DistToNext = Distance(From: NewSpot, To: OriginalPoints[Next])
-            if DistToNext < DistToPrevious
-            {
-                Callback?("Closest:Next, Insert at \(ClosestSpot)")
-                return ClosestSpot
-            }
-            else
-            {
-                Callback?("Closest:Previous, Insert at \(Previous)")
-                return Previous
-            }
-        }
-        return -1
-    }
     
     func Distance(From Point1: CGPoint, To Point2: CGPoint) -> CGFloat
     {
@@ -291,97 +225,10 @@ class LoopSurfaceWindow: UIView
             print("No points to draw")
             return
         }
-        #if false
-        var LinePoints = [(CGPoint, CGPoint)]()
-        PointAngles.removeAll()
-        if OriginalPoints.count > 2
-        {
-            for Index in 0 ..< OriginalPoints.count
-            {
-                var Previous = Index - 1
-                var Next = Index + 1
-                if Index == 0
-                {
-                    Previous = OriginalPoints.count - 1
-                }
-                if Next > OriginalPoints.count - 1
-                {
-                    Next = 0
-                }
-                var Angle = Angle3A(Point2: OriginalPoints[Previous],
-                                    Point3: OriginalPoints[Next])
-                //Angle = Angle + 90.0
-                Angle = Angle * CGFloat.pi / 180.0
-                PointAngles.append(Angle)
-                let Degrees = Angle * 180.0 / CGFloat.pi
-                //let Degrees = Angle
-                //print("[\(Previous)]=\(OriginalPoints[Previous])")
-                //print("[\(Index)]=\(OriginalPoints[Index]) Angle at index \(Index) = Int(\(Degrees))°")
-                //print("[\(Next)]=\(OriginalPoints[Next])\n")
-                let LinePath = UIBezierPath()
-                let VP = OriginalPoints[Index]
-                let OppositeAngle = fmod(abs(180.0 + Degrees), 360.0)
-                /*
-                LinePath.move(to: VP)
-                let P1 = RadialPoint(Center: VP,
-                                     Angle: Degrees,
-                                     Radius: 100.0)
-                LinePath.addLine(to: P1)
-                LinePath.move(to: VP)
-                
-                let P2 = RadialPoint(Center: VP,
-                                     Angle: OppositeAngle,
-                                     Radius: 100.0)
-                LinePath.addLine(to: P2)
-*/
-                let P1A = RadialPoint(Center: VP,
-                                      Angle: Degrees,
-                                      Radius: 1000.0)
-                let P2A = RadialPoint(Center: VP,
-                                      Angle: OppositeAngle,
-                                      Radius: 1000.0)
-                LinePath.move(to: P1A)
-                LinePath.addLine(to: P2A)
-                LinePoints.append((P1A, P2A))
-                
-                LinePath.lineWidth = 2
-                UIColor.systemYellow.setStroke()
-                LinePath.stroke()
-            }
-        }
-        #endif
-        /*
-        for Index in 0 ..< LinePoints.count
-        {
-            let (Previous, Next) =  GetAdjacentPoints(To: Index)
-            let Intersection = LineIntersection(Line1: LinePoints[Previous], Line2: LinePoints[Next])
-            MakePoint(Intersection, Color: UIColor.systemTeal)
-        }
-        */
         if NewestIndex > -1
         {
-            var Degree = PointAngles[NewestIndex] * 180.0 / CGFloat.pi
-            Degree = fmod(Degree, 360.0)
             MakePoint(OriginalPoints[NewestIndex], Color: UIColor.systemPurple,
-                      Tag: "\(NewestIndex) ",
-                      TrailingTag: " \(Int(Degree))°")
-            if let ClosestSpot = MClosest
-            {
-                let Actual = OriginalPoints[ClosestSpot]
-                DrawLine(From: OriginalPoints[NewestIndex],
-                         To: Actual,
-                         Width: 5.0,
-                         Color: UIColor.red.withAlphaComponent(0.5))
-                let (Previous, Next) = GetAdjacentPoints(To: ClosestSpot)
-                DrawLine(From: OriginalPoints[NewestIndex],
-                         To: OriginalPoints[Previous],
-                         Width: 4.0,
-                         Color: UIColor.systemOrange.withAlphaComponent(0.75))
-                DrawLine(From: OriginalPoints[NewestIndex],
-                         To: OriginalPoints[Next],
-                         Width: 4.0,
-                         Color: UIColor.systemOrange.withAlphaComponent(0.75))
-            }
+                      Tag: "\(NewestIndex) ")
         }
         for Index in 0 ..< OriginalPoints.count
         {
@@ -398,7 +245,7 @@ class LoopSurfaceWindow: UIView
             {
                 if Point == OriginalPoints[NewestIndex]
                 {
-                    //Index = Index + 1
+                    Index = Index + 1
                     continue
                 }
             }
@@ -413,18 +260,9 @@ class LoopSurfaceWindow: UIView
                     }
                 }
             }
-            #if true
             MakePoint(Point,
                       Color: PointColor,
                       Tag: "\(Index) ")
-            #else
-            var Degree = PointAngles[Index] * 180.0 / CGFloat.pi
-            Degree = 360.0 - fmod(Degree, 360.0)
-            MakePoint(Point,
-                      Color: PointColor,
-                      Tag: "\(Index) ",
-                      TrailingTag: " \(Int(Degree))°")
-            #endif
             Index = Index + 1
         }
         if let R1 = Rect1
@@ -461,41 +299,6 @@ class LoopSurfaceWindow: UIView
         Line.stroke()
     }
     
-    func Angle3(Point2: CGPoint, Point3: CGPoint) -> CGFloat
-    {
-        let A = Point2.x - Point3.x
-        let B = Point2.y - Point3.y
-        let Angle = atan2(A, B)
-        return Angle
-    }
-    
-    func Angle3A(Point2: CGPoint, Point3: CGPoint) -> CGFloat
-    {
-        let A = Point2.x - Point3.x
-        let B = Point2.y - Point3.y
-        var Degrees = atan2(A, B) * 180.0 / CGFloat.pi
-        Degrees = fmod(Degrees + 360.0, 360.0)
-        Degrees = fmod(450.0 - Degrees, 360.0)
-        Degrees = Degrees + 90.0
-        return Degrees
-    }
-    
-    func RadialPoint(Center: CGPoint, Angle: CGFloat, Radius: CGFloat) -> CGPoint
-    {
-        let Radians = Angle * CGFloat.pi / 180.0
-        let X = Radius * cos(Radians)
-        let Y = Radius * sin(Radians)
-        return CGPoint(x: X + Center.x, y: Y + Center.y)
-    }
-    
-    func RadialPointA(Center: CGPoint, Angle: CGFloat, Radius: CGFloat) -> CGPoint
-    {
-        let Radians = Angle * CGFloat.pi / 180.0
-        let X = Radius * cos(Radians)
-        let Y = Radius * sin(Radians)
-        return CGPoint(x: X + Center.x, y: Y + Center.y)
-    }
-    
     func MakePoint(_ DrawPoint: CGPoint,
                    Color: UIColor,
                    Tag: String = "", TrailingTag: String? = nil)
@@ -525,28 +328,6 @@ class LoopSurfaceWindow: UIView
             .font: UIFont.boldSystemFont(ofSize: 18.0) as Any
         ]
         PrettyLabel.draw(in: TextRect, withAttributes: Attributes)
-    }
-    
-    func LineIntersection(Line1: (P1: CGPoint, P2: CGPoint),
-                          Line2: (P3: CGPoint, P4: CGPoint)) -> CGPoint
-    {
-        let X1 = Line1.P1.x
-        let X2 = Line1.P2.x
-        let X3 = Line2.P3.x
-        let X4 = Line2.P4.x
-        let Y1 = Line1.P1.y
-        let Y2 = Line1.P2.y
-        let Y3 = Line2.P3.y
-        let Y4 = Line2.P4.y
-        print("Line1 = \(Line1.P1) to \(Line1.P2)")
-        print("Line2 = \(Line2.P3) to \(Line2.P4)")
-    let Denominator = (X1 - X2) * (Y3 - Y4) - (Y1 - Y2) * (X3 - X4)
-        print("Denomintor = \(Denominator)")
-        let XNumerator = ((X1 * Y2) - (Y1 * X2)) * (X3 - X4) - (X1 - X2) * ((X3 * Y4) - (Y3 * X4))
-        let YNumerator = ((X1 * Y2) - (Y1 * X2)) * (Y3 - Y4) - (Y1 - Y2) * ((X3 * Y4) - (Y3 * X4))
-        let X = XNumerator / Denominator
-        let Y = YNumerator / Denominator
-        return CGPoint(x: X, y: Y)
     }
 }
 
