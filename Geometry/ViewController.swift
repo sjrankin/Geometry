@@ -118,14 +118,29 @@ class ViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDataSo
         DrawSurface.PlotSurface()
         
         LoopDrawSurface.OriginalPoints.removeAll()
+        LoopDrawSurface.MClosest = nil
+        LoopDrawSurface.MLocation = nil
+        LoopDrawSurface.NewestIndex = -1
+        LoopDrawSurface.HighlightIndex = nil
+        LoopDrawSurface.RotateFrame = false
+        LoopDrawSurface.Rect1 = nil
+        LoopDrawSurface.Rect2 = nil
+        LoopDrawSurface.NewPointRect = nil
         LoopDrawSurface.PlotSurface()
     }
     
     @IBAction func RotateButtonHandler(_ sender: Any)
     {
-        DrawSurface.RotateFrame = !DrawSurface.RotateFrame
-        PointPicker.isHidden = DrawSurface.RotateFrame
-        DrawSurface.PlotSurface()
+        if InLoopMode
+        {
+            LoopDrawSurface.RotateFrame = !LoopDrawSurface.RotateFrame
+        }
+        else
+        {
+            DrawSurface.RotateFrame = !DrawSurface.RotateFrame
+            PointPicker.isHidden = DrawSurface.RotateFrame
+            DrawSurface.PlotSurface()
+        }
     }
     
     @IBAction func DistanceButtonHandler(_ sender: Any)
@@ -172,6 +187,12 @@ class ViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDataSo
             print("Not in loop mode")
             return
         }
+        
+        LoopDrawSurface.MClosest = nil
+        LoopDrawSurface.NewestIndex = -1
+        LoopDrawSurface.HighlightIndex = nil
+        LoopDrawSurface.RotateFrame = false
+        
         let CenterX = LoopDrawSurface.frame.size.width / 2.0
         let CenterY = LoopDrawSurface.frame.size.height / 2.0
         let Center = CGPoint(x: CenterX, y: CenterY)
